@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista de Jogos{% endblock %}
+
+{% block page_title %}Catálogo de Jogos{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Filtros -->
+    <div class="col-12 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="busca" class="form-label">Pesquisar</label>
+                        <input type="text" class="form-control" id="busca" name="busca" 
+                               value="{{ request.GET.busca }}" placeholder="Nome do jogo...">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="genero" class="form-label">Gênero</label>
+                        <select name="genero" id="genero" class="form-select">
+                            <option value="">Todos</option>
+                            {% for genero in generos %}
+                            <option value="{{ genero }}" {% if genero == request.GET.genero %}selected{% endif %}>
+                                {{ genero }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="plataforma" class="form-label">Plataforma</label>
+                        <select name="plataforma" id="plataforma" class="form-select">
+                            <option value="">Todas</option>
+                            {% for plataforma in plataformas %}
+                            <option value="{{ plataforma }}" {% if plataforma == request.GET.plataforma %}selected{% endif %}>
+                                {{ plataforma }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search me-1"></i> Filtrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Jogos -->
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Jogos Encontrados: {{ jogos|length }}</h5>
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" 
+                            id="ordenarDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        Ordenar por
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="ordenarDropdown">
+                        <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&ordenar=nome">Nome (A-Z)</a></li>
+                        <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&ordenar=-nome">Nome (Z-A)</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&ordenar=-ano">Ano (Mais Recente)</a></li>
+                        <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&ordenar=ano">Ano (Mais Antigo)</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&ordenar=-vendas">Mais Vendidos</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Nome</th>
+                                <th>Plataforma</th>
+                                <th>Ano</th>
+                                <th>Gênero</th>
+                                <th class="text-end">Vendas Globais (M)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for jogo in jogos %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <a href="#" class="text-decoration-none">
+                                        <strong>{{ jogo.Name }}</strong>
+                                    </a>
+                                </td>
+                                <td><span class="badge bg-primary">{{ jogo.Platform }}</span></td>
+                                <td>{{ jogo.Year|default:"N/A" }}</td>
+                                <td><span class="badge bg-info text-dark">{{ jogo.Genre }}</span></td>
+                                <td class="text-end">{{ jogo.Global_Sales|floatformat:2 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="bi bi-emoji-frown fs-1 d-block mb-2"></i>
+                                        Nenhum jogo encontrado com os filtros atuais.
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% if jogos.has_other_pages %}
+            <div class="card-footer bg-white">
+                <nav aria-label="Navegação de páginas">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if jogos.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ jogos.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Anterior">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">&laquo;</span>
+                        </li>
+                        {% endif %}
+
+                        {% for i in jogos.paginator.page_range %}
+                            {% if jogos.number == i %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ i }}</span>
+                            </li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if jogos.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ jogos.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Próximo">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">&raquo;</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

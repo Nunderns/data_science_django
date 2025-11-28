@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+
+{% block title %}Estatísticas de Jogos{% endblock %}
+
+{% block page_title %}Estatísticas Detalhadas{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <!-- Filtros -->
+    <div class="col-12 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="genero" class="form-label">Gênero</label>
+                        <select name="genero" id="genero" class="form-select">
+                            <option value="">Todos os Gêneros</option>
+                            {% for genero in generos %}
+                            <option value="{{ genero }}" {% if genero == filtro_genero %}selected{% endif %}>
+                                {{ genero }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="plataforma" class="form-label">Plataforma</label>
+                        <select name="plataforma" id="plataforma" class="form-select">
+                            <option value="">Todas as Plataformas</option>
+                            {% for plataforma in plataformas %}
+                            <option value="{{ plataforma }}" {% if plataforma == filtro_plataforma %}selected{% endif %}>
+                                {{ plataforma }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="ano" class="form-label">Ano</label>
+                        <input type="number" class="form-control" id="ano" name="ano" 
+                               value="{{ filtro_ano }}" placeholder="Ano">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-funnel me-1"></i> Filtrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas por Gênero -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">Distribuição por Gênero</h5>
+            </div>
+            <div class="card-body" style="height: 350px;">
+                <canvas id="graficoGenero"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">Vendas por Plataforma</h5>
+            </div>
+            <div class="card-body" style="height: 350px;">
+                <canvas id="graficoPlataforma"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">Evolução das Vendas por Ano</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="position: relative; height: 400px;">
+                    <canvas id="graficoEvolucao"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    Chart.defaults.animation.duration = 1000;
+    Chart.defaults.elements.line.tension = 0.2;
+    
+    const colors = [
+        'rgba(54, 162, 235, 0.7)',
+        'rgba(255, 99, 132, 0.7)',
+        'rgba(75, 192, 192, 0.7)',
+        'rgba(255, 206, 86, 0.7)',
+        'rgba(153, 102, 255, 0.7)',
+        'rgba(255, 159, 64, 0.7)'
+    ];
+
+    const ctxGenero = document.getElementById('graficoGenero');
+    if (ctxGenero) {
+        new Chart(ctxGenero, {
+            type: 'doughnut',
+            data: {
+                labels: {{ generos_labels|safe }},
+                datasets: [{
+                    data: {{ generos_valores|safe }},
+                    backgroundColor: colors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+    }
+
+    const ctxPlataforma = document.getElementById('graficoPlataforma');
+    if (ctxPlataforma) {
+        new Chart(ctxPlataforma, {
+            type: 'bar',
+            data: {
+                labels: {{ plataformas_labels|safe }},
+                datasets: [{
+                    label: 'Vendas (Milhões)',
+                    data: {{ plataformas_valores|safe }},
+                    backgroundColor: colors[0]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    const ctxEvolucao = document.getElementById('graficoEvolucao');
+    if (ctxEvolucao) {
+        new Chart(ctxEvolucao, {
+            type: 'line',
+            data: {
+                labels: {{ anos_labels|safe }},
+                datasets: [{
+                    label: 'Vendas Globais (M)',
+                    data: {{ anos_valores|safe }},
+                    borderColor: colors[2],
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

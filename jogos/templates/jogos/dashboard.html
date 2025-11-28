@@ -1,0 +1,457 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard de Jogos{% endblock %}
+
+{% block content %}
+<div class="card p-3 mb-4 shadow-sm">
+    <form method="get" class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Gênero</label>
+            <input type="text" name="genero" class="form-control" placeholder="Ex: Action"
+                   value="{{ filtro_genero }}">
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Plataforma</label>
+            <input type="text" name="plataforma" class="form-control" placeholder="Ex: PS4"
+                   value="{{ filtro_plataforma }}">
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Ano</label>
+            <input type="number" name="ano" class="form-control" placeholder="Ex: 2015"
+                   value="{{ filtro_ano }}">
+        </div>
+
+        <div class="col-md-12 text-end">
+            <button class="btn btn-primary mt-3">Filtrar</button>
+            <a href="/" class="btn btn-outline-secondary mt-3">Limpar</a>
+        </div>
+    </form>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card p-3 text-center shadow-sm">
+            <h6>Total de jogos filtrados</h6>
+            <h2>{{ jogos|length }}</h2>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card p-3 text-center shadow-sm">
+            <h6>Gêneros encontrados</h6>
+            <h2>{{ labels|length }}</h2>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card p-3 text-center shadow-sm">
+            <h6>Maior venda filtrada</h6>
+            <h2>
+                {% if jogos %}
+                    {{ jogos.0.Global_Sales|default:0 }} M
+                {% else %}
+                    0
+                {% endif %}
+            </h2>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card p-3 text-center shadow-sm">
+            <h6>Plataformas únicas</h6>
+            <h2>{{ plataformas_unicas }}</h2>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0 text-center">Média de Vendas por Gênero (Top 10)</h5>
+            </div>
+            <div class="card-body" style="height: 400px;">
+                <div class="chart-container" style="position: relative; height: 100%;">
+                    <canvas id="grafico_genero"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0 text-center">Distribuição por Plataforma (Top 10)</h5>
+            </div>
+            <div class="card-body" style="height: 400px;">
+                <div class="chart-container" style="position: relative; height: 100%;">
+                    <canvas id="grafico_plataforma"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white">
+        <h5 class="card-title mb-0 text-center">Vendas Globais por Ano</h5>
+    </div>
+    <div class="card-body">
+        <div class="chart-container" style="position: relative; height: 400px; overflow-x: auto;">
+            <div style="min-width: 800px;">
+                <canvas id="grafico_ano"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white">
+        <h5 class="card-title mb-0 text-center">Top 10 Jogos Mais Vendidos</h5>
+    </div>
+    <div class="card-body">
+        <div class="chart-container" style="position: relative; height: 500px;">
+            <canvas id="grafico_top10"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="card p-3 shadow-sm mb-5">
+    <h4 class="mb-3">Lista de Jogos</h4>
+
+    <div style="max-height: 400px; overflow-y: scroll;">
+        <table class="table table-hover table-bordered align-middle">
+            <thead class="table-dark sticky-top">
+                <tr>
+                    <th>Rank</th>
+                    <th>Nome</th>
+                    <th>Plataforma</th>
+                    <th>Ano</th>
+                    <th>Gênero</th>
+                    <th>Editora</th>
+                    <th>NA</th>
+                    <th>EU</th>
+                    <th>JP</th>
+                    <th>Outros</th>
+                    <th>Global</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for j in jogos %}
+                <tr>
+                    <td>{{ j.Rank }}</td>
+                    <td>{{ j.Name }}</td>
+                    <td>{{ j.Platform }}</td>
+                    <td>{{ j.Year|default:"-" }}</td>
+                    <td>{{ j.Genre }}</td>
+                    <td>{{ j.Publisher }}</td>
+                    <td>{{ j.NA_Sales }}</td>
+                    <td>{{ j.EU_Sales }}</td>
+                    <td>{{ j.JP_Sales }}</td>
+                    <td>{{ j.Other_Sales }}</td>
+                    <td>{{ j.Global_Sales }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function getChartData(data, defaultValue = []) {
+    try {
+        if (Array.isArray(data)) {
+            return data;
+        } else if (typeof data === 'string' && data.trim().startsWith('[')) {
+            return JSON.parse(data);
+        } else if (typeof data === 'string') {
+            return JSON.parse(data);
+        }
+        return defaultValue;
+    } catch (error) {
+        console.error('Erro ao processar dados do gráfico:', error);
+        return defaultValue;
+    }
+}
+
+const chartData = {
+    labels: JSON.parse('{{ labels_json|escapejs }}'),
+    valores: JSON.parse('{{ valores_json|escapejs }}'),
+    plataformasLabels: JSON.parse('{{ plataformas_labels_json|escapejs }}'),
+    plataformasQuantidades: JSON.parse('{{ plataformas_quantidades_json|escapejs }}'),
+    anosLabels: JSON.parse('{{ anos_labels_json|escapejs }}'),
+    anosVendas: JSON.parse('{{ anos_vendas_json|escapejs }}'),
+    top10Labels: JSON.parse('{{ top10_labels_json|escapejs }}'),
+    top10Values: JSON.parse('{{ top10_values_json|escapejs }}')
+};
+
+function getChartData(data, defaultValue = []) {
+    try {
+        if (Array.isArray(data)) {
+            return data;
+        } else if (typeof data === 'string' && data.trim().startsWith('[')) {
+            return JSON.parse(data);
+        } else if (typeof data === 'string') {
+            return JSON.parse(data);
+        }
+        return defaultValue;
+    } catch (error) {
+        console.error('Erro ao processar dados do gráfico:', error);
+        return defaultValue;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM carregado, iniciando carregamento dos gráficos...');
+    console.log('Dados dos gráficos:', chartData);
+    
+    if (typeof Chart === 'undefined') {
+        console.error('Erro: Chart.js não foi carregado corretamente!');
+        return;
+    }
+    
+    console.log('Chart.js carregado com sucesso!');
+    
+    Chart.defaults.animation.duration = 1000;
+    Chart.defaults.elements.line.tension = 0.2;
+    Chart.defaults.animation.easing = 'easeOutQuart';
+    
+    const colors = [
+        'rgba(54, 162, 235, 0.7)',
+        'rgba(255, 99, 132, 0.7)',
+        'rgba(75, 192, 192, 0.7)',
+        'rgba(255, 206, 86, 0.7)',
+        'rgba(153, 102, 255, 0.7)',
+        'rgba(255, 159, 64, 0.7)'
+    ];
+    
+    function initCharts() {
+        console.log('Inicializando gráficos...');
+        
+        const ctxGenero = document.getElementById('grafico_genero');
+        if (ctxGenero) {
+            try {
+                console.log('Dados do gráfico de gêneros:', { 
+                    labels: chartData.labels, 
+                    valores: chartData.valores 
+                });
+                
+                new Chart(ctxGenero, {
+                    type: 'bar',
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [{
+                            label: 'Média de Vendas (M)',
+                            data: chartData.valores,
+                            backgroundColor: colors[0],
+                            borderColor: colors[0].replace('0.7', '1'),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { 
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Vendas (Milhões)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Gêneros'
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log('Gráfico de gêneros inicializado com sucesso!');
+            } catch (error) {
+                console.error('Erro ao criar gráfico de gêneros:', error);
+            }
+        }
+        
+        const ctxPlataforma = document.getElementById('grafico_plataforma');
+        if (ctxPlataforma) {
+            try {
+                console.log('Dados do gráfico de plataformas:', { 
+                    plataformasLabels: chartData.plataformasLabels, 
+                    plataformasQuantidades: chartData.plataformasQuantidades 
+                });
+                
+                new Chart(ctxPlataforma, {
+                    type: 'doughnut',
+                    data: {
+                        labels: chartData.plataformasLabels,
+                        datasets: [{
+                            data: chartData.plataformasQuantidades,
+                            backgroundColor: colors,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: { 
+                                    boxWidth: 12, 
+                                    padding: 10,
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Distribuição por Plataforma',
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log('Gráfico de plataformas inicializado com sucesso!');
+            } catch (error) {
+                console.error('Erro ao criar gráfico de plataformas:', error);
+            }
+        }
+        
+        const ctxAno = document.getElementById('grafico_ano');
+        if (ctxAno) {
+            try {
+                console.log('Dados do gráfico de vendas por ano:', { 
+                    anosLabels: chartData.anosLabels, 
+                    anosVendas: chartData.anosVendas 
+                });
+                
+                new Chart(ctxAno, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.anosLabels,
+                        datasets: [{
+                            label: 'Vendas Globais (M)',
+                            data: chartData.anosVendas,
+                            borderColor: colors[2],
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            fill: false,
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { 
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Vendas (Milhões)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Ano'
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Evolução das Vendas por Ano',
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log('Gráfico de vendas por ano inicializado com sucesso!');
+            } catch (error) {
+                console.error('Erro ao criar gráfico de vendas por ano:', error);
+            }
+        }
+        
+        const ctxTop10 = document.getElementById('grafico_top10');
+        if (ctxTop10) {
+            try {
+                console.log('Dados do top 10 jogos:', { 
+                    top10Labels: chartData.top10Labels, 
+                    top10Values: chartData.top10Values 
+                });
+                
+                // Encurta os nomes dos jogos para melhor visualização
+                const shortenedLabels = chartData.top10Labels.map(label => 
+                    label.length > 30 ? label.substring(0, 27) + '...' : label
+                );
+                
+                new Chart(ctxTop10, {
+                    type: 'bar',
+                    data: {
+                        labels: shortenedLabels,
+                        datasets: [{
+                            label: 'Vendas (M)',
+                            data: chartData.top10Values,
+                            backgroundColor: colors[4]
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { 
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Vendas (Milhões)'
+                                }
+                            },
+                            y: {
+                                ticks: {
+                                    autoSkip: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: { 
+                                display: false 
+                            },
+                            title: {
+                                display: true,
+                                text: 'Top 10 Jogos Mais Vendidos',
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log('Gráfico top 10 jogos inicializado com sucesso!');
+            } catch (error) {
+                console.error('Erro ao criar gráfico top 10 jogos:', error);
+            }
+        }
+    }
+    
+    // Inicializa os gráficos após um pequeno atraso para garantir que o DOM esteja pronto
+    setTimeout(initCharts, 100);
+});
+</script>
+{% endblock %}
