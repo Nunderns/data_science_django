@@ -77,7 +77,7 @@
 
 <nav class="navbar navbar-expand-lg navbar-custom">
     <div class="container-fluid">
-        <a class="navbar-brand fw-semibold" href="#">
+        <a class="navbar-brand fw-semibold" href="{% url 'dashboard' %}">
             <i class="bi bi-joystick me-2"></i>GameStats
         </a>
         <button class="navbar-toggler text-white" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
@@ -105,15 +105,6 @@
                     </a>
                 </li>
             </ul>
-
-            <div class="d-flex">
-                <button class="btn btn-sm btn-outline-light me-2">
-                    <i class="bi bi-download me-1"></i>Exportar
-                </button>
-                <button class="btn btn-sm btn-warning text-dark fw-bold">
-                    <i class="bi bi-plus-circle me-1"></i>Adicionar Jogo
-                </button>
-            </div>
         </div>
     </div>
 </nav>
