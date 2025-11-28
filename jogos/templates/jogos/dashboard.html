@@ -7,31 +7,54 @@
 <div class="card p-3 mb-4 shadow-sm">
     <form method="get" class="row g-3">
         <div class="col-md-4">
-            <label class="form-label fw-bold">Gênero</label>
-            <input type="text" name="genero" class="form-control" placeholder="Ex: Action"
-                   value="{{ filtro_genero }}">
+            <label for="genero" class="form-label fw-bold">Gênero</label>
+            <select name="genero" id="genero" class="form-select">
+                <option value="">Todos</option>
+                {% for genero in generos %}
+                <option value="{{ genero }}" {% if genero == filtro_genero %}selected{% endif %}>
+                    {{ genero }}
+                </option>
+                {% endfor %}
+            </select>
         </div>
 
         <div class="col-md-4">
-            <label class="form-label fw-bold">Plataforma</label>
-            <input type="text" name="plataforma" class="form-control" placeholder="Ex: PS4"
-                   value="{{ filtro_plataforma }}">
+            <label for="plataforma" class="form-label fw-bold">Plataforma</label>
+            <select name="plataforma" id="plataforma" class="form-select">
+                <option value="">Todas</option>
+                {% for plataforma in plataformas %}
+                <option value="{{ plataforma }}" {% if plataforma == filtro_plataforma %}selected{% endif %}>
+                    {{ plataforma }}
+                </option>
+                {% endfor %}
+            </select>
         </div>
 
         <div class="col-md-4">
-            <label class="form-label fw-bold">Ano</label>
-            <input type="number" name="ano" class="form-control" placeholder="Ex: 2015"
-                   value="{{ filtro_ano }}">
+            <label for="ano" class="form-label fw-bold">Ano</label>
+            <select name="ano" id="ano" class="form-select">
+                <option value="">Todos</option>
+                {% for ano in anos %}
+                <option value="{{ ano }}" {% if ano|stringformat:"s" == filtro_ano|stringformat:"s" %}selected{% endif %}>
+                    {{ ano|default:"N/A" }}
+                </option>
+                {% endfor %}
+            </select>
         </div>
 
         <div class="col-md-12 text-end">
-            <button class="btn btn-primary mt-3">Filtrar</button>
-            <a href="/" class="btn btn-outline-secondary mt-3">Limpar</a>
+            <button type="submit" class="btn btn-primary mt-3">
+                <i class="bi bi-funnel me-1"></i> Filtrar
+            </button>
+            <a href="/" class="btn btn-outline-secondary mt-3">
+                <i class="bi bi-x-lg me-1"></i> Limpar
+            </a>
         </div>
     </form>
 </div>
 
 <div class="row mb-4">
+
     <div class="col-md-3">
         <div class="card p-3 text-center shadow-sm">
             <h6>Total de jogos filtrados</h6>
@@ -65,9 +88,40 @@
             <h2>{{ plataformas_unicas }}</h2>
         </div>
     </div>
+
+    <div class="row mb-4">
+
+    <div class="col-md-3">
+        <div class="card p-3 text-center shadow-sm">
+            <h6>Vendas Globais Totais</h6>
+            <h2>{{ vendas_totais }} M</h2>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card p-3 text-center shadow-sm">
+            <h6>Média Geral das Vendas</h6>
+            <h2>{{ media_vendas }} M</h2>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card p-3 text-center shadow-sm">
+            <h6>Ano mais lucrativo</h6>
+            <h2>{{ ano_mais_lucrativo }}</h2>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card p-3 text-center shadow-sm">
+            <h6>Gênero mais popular</h6>
+            <h2>{{ genero_popular }}</h2>
+        </div>
+    </div>
+
 </div>
 
-<div class="row mb-4">
+
     <div class="col-md-6 mb-4">
         <div class="card shadow-sm h-100">
             <div class="card-header bg-white">

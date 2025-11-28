@@ -62,6 +62,33 @@ def dashboard(request):
     )[:10]
     top10_labels = [j["Name"] for j in top_jogos]
     top10_values = [float(j["Global_Sales"]) for j in top_jogos]
+    
+    # Calcular estatísticas adicionais
+    if jogos:
+        maior_venda = max(float(j.get('Global_Sales', 0)) for j in jogos)
+        vendas_globais = [float(j.get('Global_Sales', 0)) for j in jogos if j.get('Global_Sales')]
+        total_vendas = sum(vendas_globais)
+        media_vendas = total_vendas / len(vendas_globais) if vendas_globais else 0
+        
+        # Encontrar ano mais lucrativo
+        vendas_por_ano = {}
+        for j in jogos:
+            if j.get('Year'):
+                vendas_por_ano[j['Year']] = vendas_por_ano.get(j['Year'], 0) + float(j.get('Global_Sales', 0))
+        ano_mais_lucrativo = max(vendas_por_ano.items(), key=lambda x: x[1])[0] if vendas_por_ano else "N/A"
+        
+        # Encontrar gênero mais popular
+        genero_contagem = {}
+        for j in jogos:
+            if j.get('Genre'):
+                genero_contagem[j['Genre']] = genero_contagem.get(j['Genre'], 0) + 1
+        genero_popular = max(genero_contagem.items(), key=lambda x: x[1])[0] if genero_contagem else "N/A"
+    else:
+        maior_venda = 0
+        total_vendas = 0
+        media_vendas = 0
+        ano_mais_lucrativo = "N/A"
+        genero_popular = "N/A"
 
     todos_jogos = ler_csv()
     generos_unicos = sorted(list(set([j['Genre'] for j in todos_jogos if j.get('Genre')])))
@@ -101,6 +128,7 @@ def dashboard(request):
         "filtro_ano": ano or "",
         "generos": generos_unicos,
         "plataformas": plataformas_unicas,
+        "anos": sorted(list(set([j['Year'] for j in todos_jogos if j.get('Year') is not None])), reverse=True),
     }
     
     context.update({
@@ -112,6 +140,12 @@ def dashboard(request):
         "anos_vendas": anos_vendas,
         "top10_labels": top10_labels,
         "top10_values": top10_values,
+        "maior_venda": round(maior_venda, 2),
+        "vendas_totais": round(total_vendas, 2),
+        "media_vendas": round(media_vendas, 2),
+        "ano_mais_lucrativo": ano_mais_lucrativo,
+        "genero_popular": genero_popular,
+        "plataformas_unicas": len(plataformas) if 'plataformas' in locals() else 0
     })
     
     return render(request, "jogos/dashboard.html", context)
