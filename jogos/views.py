@@ -14,6 +14,7 @@ def dashboard(request):
     genero = request.GET.get("genero")
     plataforma = request.GET.get("plataforma")
     ano = request.GET.get("ano")
+    ocultar_na = request.GET.get("ocultar_na") == "on"
 
     if genero and genero != "":
         jogos = [j for j in jogos if j["Genre"].lower() == genero.lower()]
@@ -24,6 +25,9 @@ def dashboard(request):
     if ano and ano.isdigit():
         ano_int = int(ano)
         jogos = [j for j in jogos if j["Year"] == ano_int]
+    if ocultar_na:
+        jogos = [j for j in jogos if all(j.get(key) is not None and str(j.get(key)).upper() != 'N/A' 
+                                      for key in ['Name', 'Platform', 'Year', 'Genre', 'Publisher', 'Global_Sales'])]
 
     genero_vendas = defaultdict(list)
     for j in jogos:
@@ -126,6 +130,7 @@ def dashboard(request):
         "filtro_genero": genero or "",
         "filtro_plataforma": plataforma or "",
         "filtro_ano": ano or "",
+        "filtro_ocultar_na": ocultar_na,
         "generos": generos_unicos,
         "plataformas": plataformas_unicas,
         "anos": sorted(list(set([j['Year'] for j in todos_jogos if j.get('Year') is not None])), reverse=True),
@@ -157,6 +162,7 @@ def estatisticas(request):
     genero = request.GET.get('genero', '')
     plataforma = request.GET.get('plataforma', '')
     ano = request.GET.get('ano', '')
+    ocultar_na = request.GET.get('ocultar_na') == 'on'
     
     if genero:
         jogos = [j for j in jogos if j.get('Genre', '').lower() == genero.lower()]
@@ -168,6 +174,11 @@ def estatisticas(request):
             jogos = [j for j in jogos if j.get('Year') == ano_int]
         except (ValueError, TypeError):
             pass
+            
+    # Filtrar registros com valores N/A se a opção estiver ativada
+    if ocultar_na:
+        jogos = [j for j in jogos if all(j.get(key) is not None and str(j.get(key)).upper() != 'N/A' 
+                                      for key in ['Name', 'Platform', 'Year', 'Genre', 'Publisher', 'Global_Sales'])]
     
     generos = defaultdict(float)
     for jogo in jogos:
@@ -231,6 +242,7 @@ def lista_jogos(request):
     genero = request.GET.get('genero', '')
     plataforma = request.GET.get('plataforma', '')
     ordenar = request.GET.get('ordenar', '-vendas')
+    ocultar_na = request.GET.get('ocultar_na') == 'on'
     
     if busca:
         jogos = [j for j in jogos if busca.lower() in j.get('Name', '').lower()]
@@ -238,15 +250,24 @@ def lista_jogos(request):
         jogos = [j for j in jogos if j.get('Genre', '').lower() == genero.lower()]
     if plataforma:
         jogos = [j for j in jogos if j.get('Platform', '').lower() == plataforma.lower()]
+    if ocultar_na:
+        jogos = [j for j in jogos if all(j.get(key) is not None and str(j.get(key, '')).upper() != 'N/A' 
+                                      for key in ['Name', 'Platform', 'Year', 'Genre', 'Publisher', 'Global_Sales'])]
     
     if ordenar == 'nome':
         jogos.sort(key=lambda x: x.get('Name', '').lower())
     elif ordenar == '-nome':
         jogos.sort(key=lambda x: x.get('Name', '').lower(), reverse=True)
     elif ordenar == 'ano':
-        jogos.sort(key=lambda x: (x.get('Year') is None, x.get('Year') == '', x.get('Year')))
+        if ocultar_na:
+            jogos.sort(key=lambda x: x.get('Year', 0))
+        else:
+            jogos.sort(key=lambda x: (x.get('Year') is None, x.get('Year') == '', x.get('Year')))
     elif ordenar == '-ano':
-        jogos.sort(key=lambda x: (x.get('Year') is None, x.get('Year') == '', x.get('Year')), reverse=True)
+        if ocultar_na:
+            jogos.sort(key=lambda x: x.get('Year', 0), reverse=True)
+        else:
+            jogos.sort(key=lambda x: (x.get('Year') is None, x.get('Year') == '', x.get('Year')), reverse=True)
     elif ordenar == 'vendas':
         jogos.sort(key=lambda x: float(x.get('Global_Sales', 0)))
     else:
